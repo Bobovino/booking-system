@@ -45,6 +45,8 @@ docker compose up --build
 
 The API listens on `http://localhost:8080`.
 
+Swagger UI: `http://localhost:8080/swagger-ui.html` · OpenAPI JSON: `/v3/api-docs`
+
 ## API
 
 | Method | Path                     | Description                     |
