@@ -1,8 +1,8 @@
 # Booking System
 
-A layered Spring Boot REST API for managing hotel rooms and bookings. Built to demonstrate clean
-layering (controller → service → repository), DTO-based API contracts, centralized error handling,
-and integration testing with Testcontainers.
+Spring Boot REST API for hotel rooms and bookings. 
+Mostly built this to learn unit, slice and integration testing
+plus CI pipelines on top of a basic controller -> service -> repository setup with DTOs and proper error handling.
 
 ## Stack
 
@@ -12,40 +12,41 @@ and integration testing with Testcontainers.
 - JUnit 5, Mockito, AssertJ, Testcontainers
 - Docker / docker-compose
 
-## Architecture
+## Structure
 
 ```
 controller/   REST endpoints, request/response mapping
-service/      business rules (e.g. no overlapping bookings for a room)
-repository/   Spring Data JPA repositories
+service/      business rules (no overlapping bookings for a room)
+repository/   Spring Data JPA repos
 domain/       JPA entities
-dto/          request/response records, decoupled from entities
-exception/    domain exceptions + @RestControllerAdvice → consistent JSON error body
+dto/          request/response records
+exception/    domain exceptions + @RestControllerAdvice for consistent error JSON
 ```
 
-Entities are never returned directly from controllers — DTOs keep the API contract independent
-from the persistence model.
+Controllers never return entities directly, always DTOs. 
+This way, we don't expose our database model to the public and we send exactly the info we intend to send to the frontend
 
-## Running locally
+## Running it
 
 Copy `.env.example` to `.env` and fill in real values (`.env` is gitignored):
 
 ```bash
 cp .env.example .env
 docker compose up -d db
-export $(grep -v '^#' .env | xargs)   # bootRun doesn't auto-load .env like docker compose does
+export $(grep -v '^#' .env | xargs)   # bootRun doesn't load .env on its own
 ./gradlew bootRun
 ```
 
-Or run everything (app + database) in containers:
+Or just run everything in containers:
 
 ```bash
 docker compose up --build
 ```
 
-The API listens on `http://localhost:8080`.
+App runs on `http://localhost:8080`.
 
 Swagger UI: `http://localhost:8080/swagger-ui.html` · OpenAPI JSON: `/v3/api-docs`
+Added Swagger because it was just a library install and the project is better documented this way.
 
 ## API
 
@@ -59,8 +60,6 @@ Swagger UI: `http://localhost:8080/swagger-ui.html` · OpenAPI JSON: `/v3/api-do
 | GET    | `/api/bookings`          | List bookings                   |
 | GET    | `/api/bookings/{id}`     | Get a booking                   |
 | POST   | `/api/bookings/{id}/cancel` | Cancel a booking            |
-
-Example:
 
 ```bash
 curl -X POST localhost:8080/api/rooms \
@@ -78,10 +77,12 @@ curl -X POST localhost:8080/api/bookings \
 ./gradlew test
 ```
 
-- `service/` — unit tests with Mockito for booking-conflict logic
-- `controller/` — `@WebMvcTest` slice tests for request validation and error mapping
-- `integration/` — full-stack test against a real PostgreSQL container via Testcontainers
+- `service/` unit tests with Mockito, mostly around the booking-conflict logic
+- `controller/` `@WebMvcTest` slice tests, validation + error mapping
+- `integration/` full flow against a real Postgres via Testcontainers
 
 ## CI
 
-`.github/workflows/ci.yml` runs `./gradlew build` (compile + test) on every push and PR.
+`.github/workflows/ci.yml` runs `./gradlew build` on every push and PR.
+This way we make sure that on every change and commit we didn't break things that we made sure to work before.
+Didn't think such a basic project needs a CD pipeline.
